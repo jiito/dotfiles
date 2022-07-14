@@ -99,3 +99,9 @@
 
 (load "~/.doom.d/lsp-mode")
 (load "~/.doom.d/rust")
+
+;; impatient-mode: trick to view markdown
+(defun markdown-html (buffer)
+(princ (with-current-buffer buffer
+(format "<!doctype html><html><title>impatient markdown</title><xmp theme=\"united\" style=\"display:none;\"> %s  </xmp><script src=\"http://strapdownjs.com/v/0.2/strapdown.js\"></script></html>" (buffer-substring-no-properties (point-min) (point-max))))
+(current-buffer)))
