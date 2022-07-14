@@ -76,10 +76,6 @@
 ;; they are implemented.
 
 
-(unless (package-installed-p 'use-package)
-  (package-refresh-contents)
-  (package-install 'use-package))
-
 (use-package rust-mode :ensure t
   :config
   (setq rust-format-on-save t))
@@ -100,3 +96,6 @@
   :config
   (setq rustic-format-on-save t)
   )
+
+(load "~/.doom.d/lsp-mode")
+(load "~/.doom.d/rust")

@@ -120,7 +120,7 @@ export EDITOR="$VISUAL"
 
 
 # PERSONAL FUNCTIONS
-fpath=(~/dotfiles/zsh/functions $fpath)
+fpath=(~/.zfunc "${fpath[@]}")
 autoload gmc acp
 
 export GPG_TTY=$(tty)
@@ -131,7 +131,7 @@ if [ -f '/Users/bjar/Downloads/google-cloud-sdk/path.zsh.inc' ]; then . '/Users/
 # The next line enables shell command completion for gcloud.
 if [ -f '/Users/bjar/Downloads/google-cloud-sdk/completion.zsh.inc' ]; then . '/Users/bjar/Downloads/google-cloud-sdk/completion.zsh.inc'; fi
 
-export PATH=”$HOME/.emacs.d/bin/doom:$PATH”
-export PATH="/usr/local/opt/coreutils/libexec/gnubin:$PATH"
+export PATH=$HOME/.emacs.d/bin/doom:$PATH
+export PATH=$PATH:/usr/local/opt/coreutils/libexec/gnubin
 
 source $HOME/.zsh/aliases
