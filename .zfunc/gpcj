@@ -1,0 +1,6 @@
+setopt local_options BASH_REMATCH
+REGEX="[A-Za-z]+-[0-9]+"
+BRANCH=$(git branch --show-current)
+if [[ $BRANCH =~ $REGEX ]]; then
+   echo $BASH_REMATCH[1]
+fi
