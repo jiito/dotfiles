@@ -1,1 +1,5 @@
-  git commit -S -m "$1"
+# GET JIRA ID
+PREFIX=$(gpcj)
+echo $PREFIX
+MESSAGE="[$PREFIX]: $1"
+git commit -S -m "$MESSAGE"
