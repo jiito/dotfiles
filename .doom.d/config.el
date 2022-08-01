@@ -76,7 +76,6 @@
 ;; they are implemented.
 
 
-(load "~/.doom.d/lsp-mode")
 
 ;; impatient-mode: trick to view markdown
 (defun markdown-html (buffer)
