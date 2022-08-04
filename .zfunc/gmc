@@ -1,4 +1,4 @@
-PREFIX=$(gcjp)
+PREFIX=$(gpcj)
 
 # COMMIT CHANGES WITH PREFIX
 MESSAGE="$1"
