@@ -1,5 +1,8 @@
-# GET JIRA ID
-PREFIX=$(gpcj)
-echo $PREFIX
-MESSAGE="[$PREFIX]: $1"
+PREFIX=$(gcjp)
+
+# COMMIT CHANGES WITH PREFIX
+MESSAGE="$1"
+if [[ ! -z "$PREFIX" ]]; then
+   MESSAGE="[$PREFIX]: "$MESSAGE
+fi
 git commit -S -m "$MESSAGE"
