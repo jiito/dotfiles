@@ -1,0 +1,2 @@
+unfunction $1
+autoload $1

@@ -124,7 +124,9 @@ export EDITOR="$VISUAL"
 
 # PERSONAL FUNCTIONS
 fpath=(~/.zfunc "${fpath[@]}")
-autoload gpcj gmc acp rfun opr
+
+autoload gpcj gmc acp glocne rfun opr
+
 
 export GPG_TTY=$(tty)
 
@@ -141,3 +143,6 @@ export PATH
 source $HOME/.zsh/aliases
 source ~/powerlevel10k/powerlevel10k.zsh-theme
 source /Users/ben.allan-rahill/git/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
+
+autoload -U +X bashcompinit && bashcompinit
+complete -o nospace -C /usr/local/bin/terraform terraform
