@@ -124,7 +124,7 @@ export EDITOR="$VISUAL"
 
 # PERSONAL FUNCTIONS
 fpath=(~/.zfunc "${fpath[@]}")
-autoload gpcj gmc acp
+autoload gpcj gmc acp rfun opr
 
 export GPG_TTY=$(tty)
 
