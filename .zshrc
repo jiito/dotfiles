@@ -141,8 +141,12 @@ PATH+=:/usr/local/opt/coreutils/libexec/gnubin
 export PATH
 
 source $HOME/.zsh/aliases
-source ~/powerlevel10k/powerlevel10k.zsh-theme
-source /Users/ben.allan-rahill/git/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
+
 
 autoload -U +X bashcompinit && bashcompinit
 complete -o nospace -C /usr/local/bin/terraform terraform
+# source /usr/local/opt/powerlevel10k/powerlevel10k.zsh-theme
+
+export WASMTIME_HOME="$HOME/.wasmtime"
+
+export PATH="$WASMTIME_HOME/bin:$PATH"

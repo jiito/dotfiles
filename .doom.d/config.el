@@ -74,8 +74,29 @@
 ;;
 ;; You can also try 'gd' (or 'C-c c d') to jump to their definition and see how
 ;; they are implemented.
+;;
+;;
+;;TODO: Move this prettier config to a new file
 
+(require 'prettier-js)
 
+(add-hook 'js2-mode-hook 'prettier-js-mode)
+(add-hook 'typescript-mode-hook 'prettier-js-mode)
+(add-hook 'web-mode-hook 'prettier-js-mode)
+
+;; (defun enable-minor-mode (my-pair)
+;;   "Enable minor mode if filename match the regexp.  MY-PAIR is a cons cell (regexp . minor-mode)."
+;;   (if (buffer-file-name)
+;;       (if (string-match (car my-pair) buffer-file-name)
+;;       (funcall (cdr my-pair)))))
+
+;; (add-hook 'web-mode-hook #'(lambda ()
+;;                             (enable-minor-mode
+;;                              '("\\.jsx?\\'" . prettier-js-mode))))
+
+;; (use-package rust-mode :ensure t
+;;   :config
+;;   (setq rust-format-on-save t))
 
 ;; impatient-mode: trick to view markdown
 (defun markdown-html (buffer)
@@ -83,4 +104,29 @@
 (format "<!doctype html><html><title>impatient markdown</title><xmp theme=\"united\" style=\"display:none;\"> %s  </xmp><script src=\"http://strapdownjs.com/v/0.2/strapdown.js\"></script></html>" (buffer-substring-no-properties (point-min) (point-max))))
 (current-buffer)))
 
-(setq projectile-project-search-path '( "~/git/" ))
+
+;; (use-package rustic
+;;   :ensure
+;;   :bind (:map rustic-mode-map
+;;          ("M-j" . lsp-ui-imenu)
+;;          ("M-?" . lsp-find-references )
+;;          ("C-c C-c l" . flycheck-list-errors)
+;;               ("C-c C-c a" . lsp-execute-code-action)
+;;               ("C-c C-c r" . lsp-rename)
+;;               ("C-c C-c q" . lsp-workspace-restart)
+;;               ("C-c C-c Q" . lsp-workspace-shutdown)
+;;               ("C-c C-c s" . lsp-rust-analyzer-status))
+;;   :config
+;;   (setq rustic-format-on-save t)
+;;   )
+
+(load "~/.doom.d/git")
+;; (load "~/.doom.d/rust")
+
+;; AUGUST 2022
+;;
+
+(setq projectile-project-search-path '("~/git/"))
+
+(setq lsp-disabled-clients '("eslint"))
+
