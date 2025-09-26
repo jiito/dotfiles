@@ -16,8 +16,8 @@
 
 (defun insert-branch-id()
   "Insert the ticket identifier at point"
-  (interactive)
   (insert (format "[%s]: "  (get-jira-prefix (current-git-branch)) ))
   (evil-insert-state)
-  (forward-char)
   )
+
+(add-hook 'git-commit-setup-hook 'insert-branch-id)
