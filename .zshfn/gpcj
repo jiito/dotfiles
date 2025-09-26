@@ -1,0 +1,10 @@
+#!/bin/zsh
+# GET JIRA ID
+[[ $(echo $0) == '-zsh' ]] && setopt local_options BASH_REMATCH
+REGEX="[A-Za-z]+-[0-9]+"
+PREFIX=""
+BRANCH=$(git branch --show-current)
+if [[ $BRANCH =~ $REGEX ]]; then
+   PREFIX=$MATCH
+fi
+echo $PREFIX

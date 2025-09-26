@@ -1,0 +1,9 @@
+autoload gpcj
+GPCJ_PREFIX=$(gpcj)
+
+# COMMIT CHANGES WITH PREFIX
+MESSAGE="$1"
+if [[ ! -z "$GPCJ_PREFIX" ]]; then
+   MESSAGE="[$GPCJ_PREFIX]: "$MESSAGE
+fi
+git commit -S -m "$MESSAGE"
