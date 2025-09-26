@@ -1,3 +1,0 @@
-git add .
-gmc "$1"
-git push

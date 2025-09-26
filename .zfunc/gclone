@@ -1,2 +1,0 @@
-git clone "git@github.com:jiito/$1.git"
-cd "$1"

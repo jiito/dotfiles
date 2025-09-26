@@ -1,8 +1,0 @@
-PREFIX=$(gpcj)
-
-# COMMIT CHANGES WITH PREFIX
-MESSAGE="$1"
-if [[ ! -z "$PREFIX" ]]; then
-   MESSAGE="[$PREFIX]: "$MESSAGE
-fi
-git commit -S -m "$MESSAGE"
