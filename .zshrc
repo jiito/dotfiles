@@ -34,6 +34,16 @@ else
 fi
 
 
+## Load Git for prompt 
+autoload -Uz vcs_info
+precmd() { vcs_info }
+
+zstyle ':vcs_info:git:*' formats '%b '
+
+setopt PROMPT_SUBST
+PROMPT='%F{cyan}%~ %F{green}${vcs_info_msg_0_}%f> '
+
+
 # PERSONAL FUNCTIONS
 fpath=(~/.zshfn "${fpath[@]}")
 
@@ -101,4 +111,7 @@ else
 fi
 unset __conda_setup
 # <<< conda initialize <<<
+#
+
+alias reload='source ~/.zshrc'
 
