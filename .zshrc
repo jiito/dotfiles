@@ -36,12 +36,24 @@ fi
 
 ## Load Git for prompt 
 autoload -Uz vcs_info
-precmd() { vcs_info }
+precmd() {
+    vcs_info
+    # taken from https://jnrowe.github.io/articles/tips/Zsh_and_the_vcs.html
+    if [[ -z "${vcs_info_msg_0_}" ]]; then
+        dir_status="%F{2} %f"
+    elif [[ -n "$(git diff --cached --name-status 2>/dev/null)" ]]; then
+        dir_status="%F{1}*%f"
+    elif [[ -n "$(git diff --name-status 2>/dev/null)" ]]; then
+        dir_status="%F{3}*%f"
+    else
+        dir_status="%F{2}*%f"
+    fi
+}
 
 zstyle ':vcs_info:git:*' formats '%b '
 
 setopt PROMPT_SUBST
-PROMPT='%F{cyan}%~ %F{green}${vcs_info_msg_0_}%f> '
+PROMPT='%F{cyan}%~ %F{green}${vcs_info_msg_0_}%f${dir_status}> '
 
 
 # PERSONAL FUNCTIONS
@@ -56,7 +68,6 @@ PATH+=:/usr/local/opt/coreutils/libexec/gnubin
 export PATH
 
 source $HOME/.zsh/aliases
-
 
 autoload -U +X bashcompinit && bashcompinit
 
