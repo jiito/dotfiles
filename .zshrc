@@ -49,12 +49,23 @@ precmd() {
     else
         dir_status="%F{2}*%f"
     fi
+    
+    # show status of dotfiles repo 
+    config_dir_status="%F{2} %f"
+    if [[ -n "$(config diff --cached --name-status 2>/dev/null)" ]]; then
+        config_dir_status="%F{1}#%f"
+    elif [[ -n "$(config diff --name-status 2>/dev/null)" ]]; then
+        config_dir_status="%F{3}#%f"
+    else
+        config_dir_status="%F{2}#%f"
+    fi
+
 }
 
 zstyle ':vcs_info:git:*' formats '%b '
 
 setopt PROMPT_SUBST
-PROMPT='%F{cyan}%~ %F{green}${vcs_info_msg_0_}%f${dir_status}> '
+PROMPT='%F{cyan}%~%F{green}${vcs_info_msg_0_}%f${dir_status}${config_dir_status}> '
 
 
 # PERSONAL FUNCTIONS
