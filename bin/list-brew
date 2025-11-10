@@ -1,0 +1,15 @@
+#!/bin/bash
+
+OUTFILE="${1:-brew-packages.txt}"
+
+{
+	echo "# Brew packages installed on $(date)"
+
+	brew list --formula | sort
+
+	echo
+	brew list --cask | sort
+
+} > "$OUTFILE"
+
+echo "Output brew pkgs to $OUTFILE"
