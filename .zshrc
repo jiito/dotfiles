@@ -56,6 +56,8 @@ precmd() {
         config_dir_status="%F{1}#%f"
     elif [[ -n "$(config diff --name-status 2>/dev/null)" ]]; then
         config_dir_status="%F{3}#%f"
+    elif [[ -n "$(config log @{u}.. 2>/dev/null)" ]]; then
+        config_dir_status="%F{3}#↑%f"
     fi
 
 }
