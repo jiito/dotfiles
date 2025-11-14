@@ -69,9 +69,10 @@ PROMPT='%F{cyan}%~%F{green}${vcs_info_msg_0_}%f${dir_status}${config_dir_status}
 
 
 # PERSONAL FUNCTIONS
-fpath=(~/.zshfn "${fpath[@]}")
-
-autoload -Uz $fpath[1]/*(.:t)
+typeset -U fpath
+my_functions=$HOME/.zshfn
+fpath=($my_functions $fpath)
+autoload -Uz ${my_functions}/*(:t)
 
 export GPG_TTY=$(tty)
 
