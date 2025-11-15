@@ -10,6 +10,9 @@ vim.cmd[[
   augroup END
 ]]
 
--- Set CMD-S to save
-vim.keymap.set('n', '<D-s>', ':w<CR>', { noremap = true, silent = true })
+-- turn off copilot in markdown files
+
+vim.cmd[[
+  autocmd FileType markdown Copilot disable
+]]
 
