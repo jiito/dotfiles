@@ -95,12 +95,6 @@ export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
 [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
 
-# The next line updates PATH for the Google Cloud SDK.
-if [ -f '/Users/bjar/Documents/sketchpro_downloads/google-cloud-sdk/path.zsh.inc' ]; then . '/Users/bjar/Documents/sketchpro_downloads/google-cloud-sdk/path.zsh.inc'; fi
-
-# The next line enables shell command completion for gcloud.
-if [ -f '/Users/bjar/Documents/sketchpro_downloads/google-cloud-sdk/completion.zsh.inc' ]; then . '/Users/bjar/Documents/sketchpro_downloads/google-cloud-sdk/completion.zsh.inc'; fi
-
 # pnpm
 export PNPM_HOME="/Users/bjar/Library/pnpm"
 case ":$PATH:" in
@@ -119,23 +113,13 @@ if command -v pyenv 1>/dev/null 2>&1; then
   eval "$(pyenv init --path)"
   eval "$(pyenv init -)"
 fi
-
-
-# >>> conda initialize >>>
-# !! Contents within this block are managed by 'conda init' !!
-__conda_setup="$('/opt/miniconda3/bin/conda' 'shell.zsh' 'hook' 2> /dev/null)"
-if [ $? -eq 0 ]; then
-    eval "$__conda_setup"
-else
-    if [ -f "/opt/miniconda3/etc/profile.d/conda.sh" ]; then
-        . "/opt/miniconda3/etc/profile.d/conda.sh"
-    else
-        export PATH="/opt/miniconda3/bin:$PATH"
-    fi
-fi
-unset __conda_setup
-# <<< conda initialize <<<
 #
 
 alias reload='source ~/.zshrc'
 
+
+# The next line updates PATH for the Google Cloud SDK.
+if [ -f '/Users/bjar/Downloads/google-cloud-sdk/path.zsh.inc' ]; then . '/Users/bjar/Downloads/google-cloud-sdk/path.zsh.inc'; fi
+
+# The next line enables shell command completion for gcloud.
+if [ -f '/Users/bjar/Downloads/google-cloud-sdk/completion.zsh.inc' ]; then . '/Users/bjar/Downloads/google-cloud-sdk/completion.zsh.inc'; fi
