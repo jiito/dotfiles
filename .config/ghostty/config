@@ -5,5 +5,5 @@ notify-on-command-finish = always
 notify-on-command-finish-action = notify
 notify-on-command-finish-after = 5s
 
-macos-icon = glass
+macos-icon = glass 
 auto-update-channel = tip
