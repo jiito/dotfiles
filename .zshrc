@@ -7,9 +7,8 @@ export PATH="/opt/homebrew/bin:/opt/homebrew/sbin:$PATH"
 # Path to your oh-my-zsh installation.
 export ZSH="$HOME/.oh-my-zsh"
 
-# Set theme - custom PROMPT below will override this
-# This is just a safety fallback in case custom prompt fails
-ZSH_THEME="robbyrussell"
+# Disable theme - we use custom PROMPT below
+ZSH_THEME=""
 
 plugins=( git
           zsh-syntax-highlighting
@@ -53,7 +52,7 @@ precmd() {
 
     # Show hostname when SSH'd in
     if [[ -n "$SSH_CONNECTION" ]]; then
-        hostname_display="$(hostname)"
+        hostname_display="[%F{yellow}$(hostname)%f] "
     else
         hostname_display=""
     fi
@@ -63,8 +62,9 @@ precmd() {
 zstyle ':vcs_info:git:*' formats '%b '
 
 setopt PROMPT_SUBST
-PROMPT='${hostname_display:+[%F{yellow}${hostname_display}%f] }%F{cyan}%~%F{green}${vcs_info_msg_0_}%f${dir_status}${config_dir_status}> '
-
+PROMPT='${hostname_display}%F{cyan}%~%F{green}${vcs_info_msg_0_}%f${dir_status}${config_dir_status}> '
+# Ensure PROMPT_SUBST stays enabled
+setopt PROMPT_SUBST
 
 # PERSONAL FUNCTIONS
 typeset -U fpath
@@ -122,3 +122,6 @@ if [ -f '/Users/bjar/Downloads/google-cloud-sdk/path.zsh.inc' ]; then . '/Users/
 
 # The next line enables shell command completion for gcloud.
 if [ -f '/Users/bjar/Downloads/google-cloud-sdk/completion.zsh.inc' ]; then . '/Users/bjar/Downloads/google-cloud-sdk/completion.zsh.inc'; fi
+
+# CRITICAL: Ensure prompt substitution is enabled (must be at end of file)
+setopt PROMPT_SUBST
