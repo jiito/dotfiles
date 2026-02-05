@@ -84,6 +84,29 @@ else
     log_success "Powerlevel10k already installed"
 fi
 
+# Install Oh-My-Zsh plugins
+log_info "Installing Oh-My-Zsh plugins..."
+
+# zsh-syntax-highlighting
+if [ ! -d "$HOME/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting" ]; then
+    log_info "Installing zsh-syntax-highlighting..."
+    git clone https://github.com/zsh-users/zsh-syntax-highlighting.git \
+        "$HOME/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting"
+    log_success "zsh-syntax-highlighting installed"
+else
+    log_success "zsh-syntax-highlighting already installed"
+fi
+
+# zsh-autosuggestions
+if [ ! -d "$HOME/.oh-my-zsh/custom/plugins/zsh-autosuggestions" ]; then
+    log_info "Installing zsh-autosuggestions..."
+    git clone https://github.com/zsh-users/zsh-autosuggestions.git \
+        "$HOME/.oh-my-zsh/custom/plugins/zsh-autosuggestions"
+    log_success "zsh-autosuggestions installed"
+else
+    log_success "zsh-autosuggestions already installed"
+fi
+
 echo ""
 
 log_info "Step 2: Installing dotfiles from git repository..."

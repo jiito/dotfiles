@@ -67,12 +67,19 @@ precmd() {
         fi
     fi
 
+    # Show hostname when SSH'd in
+    if [[ -n "$SSH_CONNECTION" ]]; then
+        hostname_display="$(hostname)"
+    else
+        hostname_display=""
+    fi
+
 }
 
 zstyle ':vcs_info:git:*' formats '%b '
 
 setopt PROMPT_SUBST
-PROMPT='%F{cyan}%~%F{green}${vcs_info_msg_0_}%f${dir_status}${config_dir_status}> '
+PROMPT='${hostname_display:+[%F{yellow}${hostname_display}%f] }%F{cyan}%~%F{green}${vcs_info_msg_0_}%f${dir_status}${config_dir_status}> '
 
 
 # PERSONAL FUNCTIONS
@@ -110,7 +117,8 @@ case ":$PATH:" in
 esac
 # pnpm end
 
-. "$HOME/.local/bin/env"
+# Source local env file if it exists
+[ -f "$HOME/.local/bin/env" ] && . "$HOME/.local/bin/env"
 
 # Added by Windsurf
 export PATH="/Users/bjar/.codeium/windsurf/bin:$PATH"
