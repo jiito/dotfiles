@@ -18,13 +18,13 @@ echo $MACHINE
 if [ ! -d "$HOME/.oh-my-zsh" ]; then
   # Installs Oh my ZSH with Homebrew (Mac)
   if [[ $MACHINE == "Mac" ]]; then
-    sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+    KEEP_ZSHRC=yes CHSH=no sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
   fi
 
   # Installs Oh my ZSH with Linux
   if [[ $MACHINE == "Linux" ]]; then
     sudo apt install zsh -y
-    sh -c "$(curl -fsSL https://raw.githubusercontent.com/robbyrussell/oh-my-zsh/master/tools/install.sh)"
+    KEEP_ZSHRC=yes CHSH=no sh -c "$(curl -fsSL https://raw.githubusercontent.com/robbyrussell/oh-my-zsh/master/tools/install.sh)" "" --unattended
   fi
 fi
 
