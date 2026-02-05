@@ -14,6 +14,10 @@ export PATH="/opt/homebrew/bin:/opt/homebrew/sbin:$PATH"
 # Path to your oh-my-zsh installation.
 export ZSH="$HOME/.oh-my-zsh"
 
+# Set theme - custom PROMPT below will override this
+# This is just a safety fallback in case custom prompt fails
+ZSH_THEME="robbyrussell"
+
 plugins=( git
           zsh-syntax-highlighting
           zsh-autosuggestions
@@ -49,15 +53,18 @@ precmd() {
     else
         dir_status="%F{2}*%f"
     fi
-    
-    # show status of dotfiles repo 
-    config_dir_status="%F{2} %f"
-    if [[ -n "$(config diff --cached --name-status 2>/dev/null)" ]]; then
-        config_dir_status="%F{1}#%f"
-    elif [[ -n "$(config diff --name-status 2>/dev/null)" ]]; then
-        config_dir_status="%F{3}#%f"
-    elif [[ -n "$(config log @{u}.. 2>/dev/null)" ]]; then
-        config_dir_status="%F{3}#↑%f"
+
+    # show status of dotfiles repo (only if bare repo exists)
+    config_dir_status=""
+    if [[ -d "$HOME/.cfg" ]]; then
+        config_dir_status="%F{2} %f"
+        if [[ -n "$(config diff --cached --name-status 2>/dev/null)" ]]; then
+            config_dir_status="%F{1}#%f"
+        elif [[ -n "$(config diff --name-status 2>/dev/null)" ]]; then
+            config_dir_status="%F{3}#%f"
+        elif [[ -n "$(config log @{u}.. 2>/dev/null)" ]]; then
+            config_dir_status="%F{3}#↑%f"
+        fi
     fi
 
 }

@@ -1,21 +1,60 @@
 #!/usr/bin/env bash
 
-git clone --bare git@github.com:jiito/dotfiles.git $HOME/.cfg
-# define config alias locally since the dotfiles
-# aren't installed on the system yet
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m'
+
+echo -e "${YELLOW}[Installing Dotfiles]${NC}"
+
+# Clone bare repo
+if [ ! -d "$HOME/.cfg" ]; then
+    echo "Cloning dotfiles repository..."
+    git clone --bare git@github.com:jiito/dotfiles.git $HOME/.cfg
+    echo -e "${GREEN}✓${NC} Cloned dotfiles repository"
+else
+    echo -e "${YELLOW}!${NC} Dotfiles repository already exists"
+fi
+
+# Define config alias locally
 function config {
    git --git-dir=$HOME/.cfg/ --work-tree=$HOME $@
 }
 
-# create a directory to backup existing dotfiles to
-mkdir -p .dotfiles-backup
-config checkout
-if [ $? = 0 ]; then
-  echo "Checked out dotfiles from git@github.com:jiito/dotfiles.git";
-  else
-    echo "Moving existing dotfiles to ~/.dotfiles-backup";
-    config checkout 2>&1 | egrep "\s+\." | awk {'print $1'} | xargs -I{} mv {} .dotfiles-backup/{}
+# Create backup directory
+mkdir -p $HOME/.dotfiles-backup
+
+# Checkout dotfiles
+echo "Checking out dotfiles..."
+if config checkout 2>&1 | grep -q "error: The following untracked working tree files would be overwritten"; then
+    echo -e "${YELLOW}!${NC} Moving conflicting files to ~/.dotfiles-backup"
+    config checkout 2>&1 | grep -E "^\s+\." | awk '{print $1}' | xargs -I{} sh -c 'mkdir -p $(dirname ~/.dotfiles-backup/{}) && mv {} ~/.dotfiles-backup/{}'
+    config checkout
 fi
-# checkout dotfiles from repo
-config checkout
-config config status.showUntrackedFiles no
+
+# Verify checkout succeeded
+if [ $? -eq 0 ]; then
+    echo -e "${GREEN}✓${NC} Dotfiles checked out successfully"
+    config config status.showUntrackedFiles no
+
+    # Verify critical files exist
+    echo "Verifying critical files..."
+    for file in .zshrc .zsh/aliases; do
+        if [ -e "$HOME/$file" ]; then
+            echo -e "${GREEN}✓${NC} $file"
+        else
+            echo -e "${RED}✗${NC} $file MISSING"
+        fi
+    done
+
+    if [ -d "$HOME/.zshfn" ]; then
+        count=$(ls -1 "$HOME/.zshfn" 2>/dev/null | wc -l)
+        echo -e "${GREEN}✓${NC} .zshfn/ ($count functions)"
+    else
+        echo -e "${RED}✗${NC} .zshfn/ directory MISSING"
+    fi
+else
+    echo -e "${RED}✗${NC} Failed to checkout dotfiles"
+    exit 1
+fi

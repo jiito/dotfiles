@@ -66,16 +66,22 @@ else
         bash "$SCRIPTS_DIR/install-zsh.sh"
         log_success "Zsh + Oh-My-Zsh installed"
 
-        # Remove the oh-my-zsh template .zshrc if it was created
-        # (dotfiles will provide the real one)
-        if [ -f "$HOME/.zshrc" ]; then
-            rm "$HOME/.zshrc"
-            log_info "Removed oh-my-zsh template .zshrc (dotfiles will provide custom config)"
-        fi
+        # Note: Oh-My-Zsh creates a template .zshrc, but install_dotfiles
+        # will back it up and replace it with the custom one from the repo
     else
         log_error "install-zsh.sh not found in $SCRIPTS_DIR"
         exit 1
     fi
+fi
+
+# Install Powerlevel10k theme
+if [ ! -d "$HOME/.oh-my-zsh/custom/themes/powerlevel10k" ]; then
+    log_info "Installing Powerlevel10k theme..."
+    git clone --depth=1 https://github.com/romkatv/powerlevel10k.git \
+        "$HOME/.oh-my-zsh/custom/themes/powerlevel10k"
+    log_success "Powerlevel10k installed"
+else
+    log_success "Powerlevel10k already installed"
 fi
 
 echo ""
@@ -87,6 +93,18 @@ if [ -d "$HOME/.cfg" ]; then
 else
     if [ -f "$SCRIPTS_DIR/install_dotfiles" ]; then
         bash "$SCRIPTS_DIR/install_dotfiles"
+
+        # Verify that critical files were actually checked out
+        if [ ! -f "$HOME/.zshrc" ]; then
+            log_error "Dotfiles checkout failed - .zshrc not found!"
+            log_info "Restoring backup .zshrc..."
+            if [ -f "$HOME/.zshrc.backup-pre-setup" ]; then
+                mv "$HOME/.zshrc.backup-pre-setup" "$HOME/.zshrc"
+                log_warning "Using backup .zshrc - dotfiles may not be properly configured"
+            fi
+            exit 1
+        fi
+
         log_success "Dotfiles installed (including custom .zshrc)"
     else
         log_error "install_dotfiles not found in $SCRIPTS_DIR"
