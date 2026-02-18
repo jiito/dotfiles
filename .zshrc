@@ -125,3 +125,5 @@ if [ -f '/Users/bjar/Downloads/google-cloud-sdk/completion.zsh.inc' ]; then . '/
 
 # CRITICAL: Ensure prompt substitution is enabled (must be at end of file)
 setopt PROMPT_SUBST
+
+$fpath = (~/.zshfn $fpath)
