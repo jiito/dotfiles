@@ -117,13 +117,12 @@ fi
 alias reload='source ~/.zshrc'
 
 
-# The next line updates PATH for the Google Cloud SDK.
-if [ -f '/Users/bjar/Downloads/google-cloud-sdk/path.zsh.inc' ]; then . '/Users/bjar/Downloads/google-cloud-sdk/path.zsh.inc'; fi
-
-# The next line enables shell command completion for gcloud.
-if [ -f '/Users/bjar/Downloads/google-cloud-sdk/completion.zsh.inc' ]; then . '/Users/bjar/Downloads/google-cloud-sdk/completion.zsh.inc'; fi
-
 # CRITICAL: Ensure prompt substitution is enabled (must be at end of file)
 setopt PROMPT_SUBST
 
-$fpath = (~/.zshfn $fpath)
+
+# The next line updates PATH for the Google Cloud SDK.
+if [ -f '/Users/bjar/google-cloud-sdk/path.zsh.inc' ]; then . '/Users/bjar/google-cloud-sdk/path.zsh.inc'; fi
+
+# The next line enables shell command completion for gcloud.
+if [ -f '/Users/bjar/google-cloud-sdk/completion.zsh.inc' ]; then . '/Users/bjar/google-cloud-sdk/completion.zsh.inc'; fi
