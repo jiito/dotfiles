@@ -1,6 +1,6 @@
 ---
 name: meal-planner
-description: Automated weekly low-carb vegetarian meal planning workflow with calendar integration, recipe research, grocery list generation, and Things integration. Use when the user requests meal planning, asks to "run my weekly meal plan", wants a grocery list for the week, or needs help planning low-carb vegetarian meals.
+description: Automated weekly low-carb vegetarian meal planning workflow with calendar integration, recipe research, Trader Joe's price estimates, grocery list generation, and Things integration. Use when the user requests meal planning, asks to "run my weekly meal plan", wants a grocery list for the week, or needs help planning low-carb vegetarian meals.
 ---
 
 # Weekly Low-Carb Vegetarian Meal Planner
@@ -16,6 +16,7 @@ Autonomous workflow for creating weekly meal plans with calendar integration, re
 - Current meals handled separately: Greek yogurt or eggs (breakfast), tuna salad (lunch)
 
 **Preferences:**
+- Primary grocery store: Trader Joe's
 - Prioritizes time savings over elaborate cooking
 - Quick meals and easy cleanup
 - Meal prep strategies welcomed
@@ -35,9 +36,8 @@ Execute all steps autonomously without follow-up questions. Make reasonable assu
 ### Step 1: Calendar Analysis
 
 **Required calls:**
-1. `things-dev:get_todos` with `include_items: true`
-2. Find calendars using appropriate calendar tool
-3. Get events for current week (Monday 00:00 to Sunday 23:59 Pacific timezone)
+1. Find calendars using appropriate calendar tool
+2. Get events for current week (Monday 00:00 to Sunday 23:59 Pacific timezone)
 
 **Actions:**
 - Identify existing meal times (cooking blocks, meal names, dinner plans)
@@ -117,65 +117,95 @@ Health Score (1-10):
 - 5-8 time-saving prep tips
 - No confirmation requests or preference questions
 
-### Step 4: Generate Grocery List
+### Step 4: Estimate Trader Joe's Prices
+
+**Required searches:**
+1. `web_search`: "Trader Joe's grocery prices [year]" (for general price references)
+2. `web_search`: "Trader Joe's [specific key items from meal plan] price" (1-2 targeted searches for high-cost items like tofu, cheese, specialty items)
+
+**Actions:**
+- Look up current or recent Trader Joe's prices for as many grocery list items as possible
+- For items without exact TJ's prices, estimate based on known TJ's pricing patterns (TJ's is generally 10-20% cheaper than conventional grocery stores)
+- Use TJ's product names where they differ from generic (e.g., "TJ's Organic Extra Firm Tofu" instead of just "tofu")
+- Note TJ's-specific products that are good deals (e.g., Everything But The Bagel seasoning, TJ's frozen items)
+- Flag any items that Trader Joe's typically does NOT carry (suggest alternatives or note "buy elsewhere")
+
+**Pricing guidelines:**
+- Use the most recent prices found; note if prices may have changed
+- Round to nearest $0.49/$0.99 (TJ's typical pricing)
+- When exact price is unknown, provide a reasonable estimate marked with "~" (e.g., "~$2.99")
+- Include per-item price AND running category subtotals
+
+### Step 5: Generate Grocery List
 
 **Format:**
 
 ```markdown
-# Grocery List - Low-Carb Vegetarian Meal Plan
+# Grocery List - Low-Carb Vegetarian Meal Plan (Trader Joe's)
 **Week of [Date Range]**
 
 ## PRODUCE
 ### Vegetables
-- [ ] [Item] ([quantity/size])
-
+- [ ] [Item] ([quantity/size]) — $X.XX
 ### Fruits
-- [ ] [Item] ([quantity/size])
+- [ ] [Item] ([quantity/size]) — $X.XX
+
+**Subtotal: ~$XX.XX**
 
 ---
 
 ## PROTEIN
 ### Eggs & Dairy
-- [ ] [Item] ([quantity/size])
-
+- [ ] [Item] ([quantity/size]) — $X.XX
 ### Plant-Based Protein
-- [ ] [Item] ([quantity/size])
+- [ ] [Item] ([quantity/size]) — $X.XX
+
+**Subtotal: ~$XX.XX**
 
 ---
 
 ## PANTRY STAPLES
 ### Oils & Vinegars
-- [ ] [Item]
-
+- [ ] [Item] — $X.XX
 ### Nuts & Seeds
-- [ ] [Item] ([quantity/size])
-
+- [ ] [Item] ([quantity/size]) — $X.XX
 ### Condiments & Sauces
-- [ ] [Item] ([quantity/size])
-
+- [ ] [Item] ([quantity/size]) — $X.XX
 ### Spices & Seasonings
-- [ ] [Item]
+- [ ] [Item] — $X.XX
+
+**Subtotal: ~$XX.XX**
 
 ---
 
 ## FROZEN (Optional convenience items)
-- [ ] [Item] ([quantity/size])
+- [ ] [Item] ([quantity/size]) — $X.XX
+
+**Subtotal: ~$XX.XX**
+
+---
+
+## 🧾 ESTIMATED TOTAL: ~$XX.XX
+*Prices based on Trader Joe's. Items marked with ~ are estimates. Items marked ⚠️ may not be available at TJ's.*
 
 ---
 
 ## SHOPPING TIPS
-[5-6 practical tips]
+[5-6 practical tips, including any TJ's-specific recommendations]
 ```
 
 **Requirements:**
 - All items with checkboxes `- [ ]`
 - Specific quantities (e.g., "2 heads", "1 lb", "16 oz")
 - Organized by department
-- Include cost estimate ranges
+- Trader Joe's price per item (use "~" prefix for estimates)
+- Category subtotals and grand total estimate
+- Use TJ's product names where applicable
+- Flag items TJ's may not carry with ⚠️ and suggest where to get them
 - Note items that may already be owned
-- Suggest budget-friendly alternatives
+- Include TJ's-specific tips (best deals, seasonal items, etc.)
 
-### Step 5: Save and Present Files
+### Step 6: Save and Present Files
 
 **Actions:**
 1. Create `meal_plan.md` in `/home/claude/`
@@ -183,25 +213,20 @@ Health Score (1-10):
 3. Copy both to `/mnt/user-data/outputs/`
 4. Present both files
 
-### Step 6: Add to Things
+### Step 7: Add to Things
+
+**Grocery project ID:** `3E2i5pzqi37LQChr78ov9B` (Things URL: `things:///show?id=3E2i5pzqi37LQChr78ov9B`)
+
+Do NOT call `things-dev:get_todos` or `things-dev:get_projects` to find the grocery project. Use the known project ID directly.
 
 **Attempt (max 2 tries):**
 
-Option A - Add individual items:
+Add individual grocery items as todos under the known grocery project:
 ```
 things-dev:add_todo for each major grocery category
 {
   "title": "Buy [category items]",
-  "tags": ["groceries", "meal-prep"]
-}
-```
-
-Option B - Single todo:
-```
-things-dev:add_todo
-{
-  "title": "Buy groceries for low-carb meal plan - see documents",
-  "notes": "[Summary of key items]\n\nFull list in meal plan documents",
+  "list_id": "3E2i5pzqi37LQChr78ov9B",
   "tags": ["groceries", "meal-prep"]
 }
 ```
@@ -218,8 +243,8 @@ I've created your meal plan for [date range].
 **What's Included:**
 - [X] meals planned (filling gaps in calendar)
 - [X] healthy snack options
-- Complete grocery list organized by department
-- Estimated cost: $XX-XX
+- Complete grocery list with Trader Joe's prices
+- Estimated total: ~$XX.XX at Trader Joe's
 
 **Meal Highlights:**
 - [1-2 sentence summary of variety]
