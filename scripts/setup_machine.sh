@@ -10,10 +10,14 @@
 #   - Git configuration (user info and GPG signing)
 #   - Tmux + TPM (Tmux Plugin Manager)
 #
-# Originally created for RunPod environments, but works on any Linux/Mac system.
+# Self-contained script - no external dependencies required.
 #
-# Usage:
-#   bash ~/scripts/setup_machine.sh
+# Usage (fresh machine):
+#   curl -fsSL https://raw.githubusercontent.com/jiito/dotfiles/main/scripts/setup_machine.sh | bash
+#
+# Or download and run:
+#   curl -fsSL -o setup.sh https://raw.githubusercontent.com/jiito/dotfiles/main/scripts/setup_machine.sh
+#   chmod +x setup.sh && ./setup.sh
 #
 ################################################################################
 
@@ -25,6 +29,11 @@ GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
+
+# Repository URLs
+DOTFILES_REPO_SSH="git@github.com:jiito/dotfiles.git"
+DOTFILES_REPO_HTTPS="https://github.com/jiito/dotfiles.git"
+CFG_DIR="$HOME/.cfg"
 
 # Helper functions
 log_info() {
@@ -43,38 +52,120 @@ log_error() {
     echo -e "${RED}[ERROR]${NC} $1"
 }
 
-# Detect scripts directory
-SCRIPTS_DIR="$HOME/scripts"
-if [ ! -d "$SCRIPTS_DIR" ]; then
-    log_error "Scripts directory not found at $SCRIPTS_DIR"
-    log_info "Please ensure your scripts are located in ~/scripts/"
-    exit 1
-fi
+# Config alias function for bare repo
+config() {
+    git --git-dir="$CFG_DIR" --work-tree="$HOME" "$@"
+}
 
-log_info "Step 1: Installing Zsh + Oh-My-Zsh..."
+# Detect OS
+detect_os() {
+    unameOut="$(uname -s)"
+    case "${unameOut}" in
+        Linux*)     MACHINE=Linux;;
+        Darwin*)    MACHINE=Mac;;
+        *)          MACHINE="UNKNOWN:${unameOut}"
+    esac
+    echo "$MACHINE"
+}
 
-if [ -d "$HOME/.oh-my-zsh" ]; then
-    log_warning "Oh-My-Zsh already installed, skipping..."
+MACHINE=$(detect_os)
+log_info "Detected OS: $MACHINE"
+echo ""
+
+################################################################################
+# Step 1: Install Zsh (Linux only)
+################################################################################
+log_info "Step 1: Installing Zsh..."
+
+if command -v zsh &> /dev/null; then
+    log_success "Zsh already installed ($(zsh --version))"
 else
-    if [ -f "$SCRIPTS_DIR/install-zsh.sh" ]; then
-        # Backup any existing .zshrc before oh-my-zsh install
-        if [ -f "$HOME/.zshrc" ]; then
-            mv "$HOME/.zshrc" "$HOME/.zshrc.backup-pre-setup"
-            log_info "Backed up existing .zshrc"
-        fi
-
-        bash "$SCRIPTS_DIR/install-zsh.sh"
-        log_success "Zsh + Oh-My-Zsh installed"
-
-        # Note: Oh-My-Zsh creates a template .zshrc, but install_dotfiles
-        # will back it up and replace it with the custom one from the repo
-    else
-        log_error "install-zsh.sh not found in $SCRIPTS_DIR"
+    if [[ $MACHINE == "Linux" ]]; then
+        log_info "Installing zsh via apt..."
+        sudo apt-get update && sudo apt-get install -y zsh
+        log_success "Zsh installed"
+    elif [[ $MACHINE == "Mac" ]]; then
+        log_warning "Zsh not found. macOS should have zsh by default."
+        log_warning "Please install via: brew install zsh"
         exit 1
     fi
 fi
 
-# Install Powerlevel10k theme
+echo ""
+
+################################################################################
+# Step 2: Install Oh-My-Zsh
+################################################################################
+log_info "Step 2: Installing Oh-My-Zsh..."
+
+if [ -d "$HOME/.oh-my-zsh" ]; then
+    log_success "Oh-My-Zsh already installed, skipping..."
+else
+    log_info "Installing Oh-My-Zsh (keeping existing .zshrc if present)..."
+    KEEP_ZSHRC=yes CHSH=no sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
+    log_success "Oh-My-Zsh installed"
+fi
+
+echo ""
+
+################################################################################
+# Step 3: Install Dotfiles
+################################################################################
+log_info "Step 3: Installing dotfiles from git repository..."
+
+if [ -d "$CFG_DIR" ]; then
+    log_success "Dotfiles repository already exists, skipping clone..."
+else
+    # Try SSH first (works with ForwardAgent), fall back to HTTPS
+    log_info "Checking SSH access to GitHub..."
+    if ssh -T git@github.com 2>&1 | grep -q "successfully authenticated"; then
+        log_info "SSH available, cloning via SSH..."
+        git clone --bare "$DOTFILES_REPO_SSH" "$CFG_DIR"
+    else
+        log_warning "SSH not available, using HTTPS (read-only)..."
+        git clone --bare "$DOTFILES_REPO_HTTPS" "$CFG_DIR"
+    fi
+    log_success "Cloned dotfiles repository"
+fi
+
+# Checkout dotfiles
+log_info "Checking out dotfiles..."
+mkdir -p "$HOME/.dotfiles-backup"
+
+if config checkout 2>&1 | grep -q "error: The following untracked working tree files would be overwritten"; then
+    log_warning "Moving conflicting files to ~/.dotfiles-backup"
+    config checkout 2>&1 | grep -E "^\s+\." | awk '{print $1}' | xargs -I{} sh -c 'mkdir -p $(dirname ~/.dotfiles-backup/{}) && mv {} ~/.dotfiles-backup/{}'
+    config checkout
+fi
+
+# Configure bare repo to hide untracked files
+config config status.showUntrackedFiles no
+
+# Verify critical files exist
+log_info "Verifying critical files..."
+for file in .zshrc .zsh/aliases; do
+    if [ -e "$HOME/$file" ]; then
+        log_success "$file found"
+    else
+        log_error "$file MISSING"
+    fi
+done
+
+if [ -d "$HOME/.zshfn" ]; then
+    count=$(ls -1 "$HOME/.zshfn" 2>/dev/null | wc -l)
+    log_success ".zshfn/ ($count functions)"
+else
+    log_warning ".zshfn/ directory not found (may be expected)"
+fi
+
+echo ""
+
+################################################################################
+# Step 4: Install Zsh Plugins
+################################################################################
+log_info "Step 4: Installing Zsh plugins..."
+
+# Powerlevel10k theme
 if [ ! -d "$HOME/.oh-my-zsh/custom/themes/powerlevel10k" ]; then
     log_info "Installing Powerlevel10k theme..."
     git clone --depth=1 https://github.com/romkatv/powerlevel10k.git \
@@ -83,9 +174,6 @@ if [ ! -d "$HOME/.oh-my-zsh/custom/themes/powerlevel10k" ]; then
 else
     log_success "Powerlevel10k already installed"
 fi
-
-# Install Oh-My-Zsh plugins
-log_info "Installing Oh-My-Zsh plugins..."
 
 # zsh-syntax-highlighting
 if [ ! -d "$HOME/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting" ]; then
@@ -109,35 +197,10 @@ fi
 
 echo ""
 
-log_info "Step 2: Installing dotfiles from git repository..."
-
-if [ -d "$HOME/.cfg" ]; then
-    log_warning "Dotfiles repository already exists, skipping..."
-else
-    if [ -f "$SCRIPTS_DIR/install_dotfiles" ]; then
-        bash "$SCRIPTS_DIR/install_dotfiles"
-
-        # Verify that critical files were actually checked out
-        if [ ! -f "$HOME/.zshrc" ]; then
-            log_error "Dotfiles checkout failed - .zshrc not found!"
-            log_info "Restoring backup .zshrc..."
-            if [ -f "$HOME/.zshrc.backup-pre-setup" ]; then
-                mv "$HOME/.zshrc.backup-pre-setup" "$HOME/.zshrc"
-                log_warning "Using backup .zshrc - dotfiles may not be properly configured"
-            fi
-            exit 1
-        fi
-
-        log_success "Dotfiles installed (including custom .zshrc)"
-    else
-        log_error "install_dotfiles not found in $SCRIPTS_DIR"
-        exit 1
-    fi
-fi
-
-echo ""
-
-log_info "Step 3: Configuring Git..."
+################################################################################
+# Step 5: Configure Git
+################################################################################
+log_info "Step 5: Configuring Git..."
 
 git config --global user.email "me@benjamin.ar"
 git config --global user.name "jiito"
@@ -150,15 +213,10 @@ log_success "Git configured"
 
 echo ""
 
-log_info "Step 4: Installing Tmux + TPM (Tmux Plugin Manager)..."
-
-# Detect OS
-unameOut="$(uname -s)"
-case "${unameOut}" in
-    Linux*)     MACHINE=Linux;;
-    Darwin*)    MACHINE=Mac;;
-    *)          MACHINE="UNKNOWN:${unameOut}"
-esac
+################################################################################
+# Step 6: Install Tmux + TPM
+################################################################################
+log_info "Step 6: Installing Tmux + TPM (Tmux Plugin Manager)..."
 
 # Install tmux if not present (mainly for Linux)
 if ! command -v tmux &> /dev/null; then
@@ -168,8 +226,6 @@ if ! command -v tmux &> /dev/null; then
         log_success "Tmux installed"
     elif [[ $MACHINE == "Mac" ]]; then
         log_warning "Tmux not found. Please install via: brew install tmux"
-	# TODO: add confirm and install automatically
-	
     fi
 else
     log_success "Tmux already installed ($(tmux -V))"
@@ -178,7 +234,7 @@ fi
 # Install TPM (Tmux Plugin Manager)
 TPM_DIR="$HOME/.tmux/plugins/tpm"
 if [ -d "$TPM_DIR" ]; then
-    log_warning "TPM already installed, skipping..."
+    log_success "TPM already installed, skipping..."
 else
     log_info "Cloning TPM..."
     git clone https://github.com/tmux-plugins/tpm "$TPM_DIR"
@@ -188,9 +244,9 @@ fi
 echo ""
 
 ################################################################################
-# 5. Change Default Shell to Zsh
+# Step 7: Set Default Shell to Zsh
 ################################################################################
-log_info "Step 5: Setting zsh as default shell..."
+log_info "Step 7: Setting zsh as default shell..."
 
 ZSH_PATH=$(which zsh)
 if [ "$SHELL" != "$ZSH_PATH" ]; then
@@ -218,7 +274,7 @@ echo "=================================="
 echo ""
 log_success "All components installed successfully"
 echo ""
-log_info "Your custom .zshrc from dotfiles has been installed (not the oh-my-zsh template)"
+log_info "Your custom .zshrc from dotfiles has been installed"
 echo ""
 echo "Next steps:"
 echo "  1. Restart your shell or run: exec zsh"
