@@ -3,4 +3,6 @@ alias config='/usr/bin/git --git-dir=$HOME/.cfg/ --work-tree=$HOME'
 alias cfgp='config push -u origin HEAD'
 alias cfgcm='config commit -S -m $1'
 
+alias cdg='claude --dangerously-skip-permissions'
+
 
