@@ -4,6 +4,19 @@
             "complex_modifications": {
                 "rules": [
                     {
+                        "description": "EarPods button to fn for wispr",
+                        "manipulators": [
+                            {
+                                "from": { "consumer_key_code": "play_or_pause" },
+                                "to": [
+                                    { "key_code": "fn" },
+                                    { "key_code": "fn" }
+                                ],
+                                "type": "basic"
+                            }
+                        ]
+                    },
+                    {
                         "description": "change ctrl-w to option-backspace",
                         "manipulators": [
                             {
@@ -55,6 +68,18 @@
                             "to": [{ "key_code": "left_control" }]
                         }
                     ]
+                },
+                {
+                    "identifiers": {
+                        "is_consumer": true,
+                        "product_id": 4363,
+                        "vendor_id": 1452
+                    },
+                    "ignore": false
+                },
+                {
+                    "identifiers": { "is_consumer": true },
+                    "ignore": false
                 }
             ],
             "name": "Default profile",
