@@ -1,41 +1,108 @@
--- note: diagnostics are not exclusive to lsp servers
--- so these can be global keybindings
-vim.keymap.set('n', 'gl', '<cmd>lua vim.diagnostic.open_float()<cr>')
-vim.keymap.set('n', '[d', '<cmd>lua vim.diagnostic.goto_prev()<cr>')
-vim.keymap.set('n', ']d', '<cmd>lua vim.diagnostic.goto_next()<cr>') 
+-- Diagnostics keymaps (work without an LSP attached)
+vim.keymap.set('n', 'gl', vim.diagnostic.open_float)
+vim.keymap.set('n', '[d', function() vim.diagnostic.jump({ count = -1, float = true }) end)
+vim.keymap.set('n', ']d', function() vim.diagnostic.jump({ count = 1,  float = true }) end)
 
+-- LSP keymaps — applied per-buffer when a server attaches
 vim.api.nvim_create_autocmd('LspAttach', {
   desc = 'LSP actions',
   callback = function(event)
-    local opts = {buffer = event.buf}
-
-    -- these will be buffer-local keybindings
-    -- because they only work if you have an active language server
-
-    vim.keymap.set('n', 'K', '<cmd>lua vim.lsp.buf.hover()<cr>', opts)
-    vim.keymap.set('n', 'gd', '<cmd>lua vim.lsp.buf.definition()<cr>', opts)
-    vim.keymap.set('n', 'gD', '<cmd>lua vim.lsp.buf.declaration()<cr>', opts)
-    vim.keymap.set('n', 'gi', '<cmd>lua vim.lsp.buf.implementation()<cr>', opts)
-    vim.keymap.set('n', 'go', '<cmd>lua vim.lsp.buf.type_definition()<cr>', opts)
-    vim.keymap.set('n', 'gr', '<cmd>lua vim.lsp.buf.references()<cr>', opts)
-    vim.keymap.set('n', 'gs', '<cmd>lua vim.lsp.buf.signature_help()<cr>', opts)
-    vim.keymap.set('n', '<F2>', '<cmd>lua vim.lsp.buf.rename()<cr>', opts)
-    vim.keymap.set({'n', 'x'}, '<F3>', '<cmd>lua vim.lsp.buf.format({async = true})<cr>', opts)
-    vim.keymap.set('n', '<F4>', '<cmd>lua vim.lsp.buf.code_action()<cr>', opts)
-  end
+    local opts = { buffer = event.buf }
+    vim.keymap.set('n', 'K',  vim.lsp.buf.hover, opts)
+    vim.keymap.set('n', 'gd', vim.lsp.buf.definition, opts)
+    vim.keymap.set('n', 'gD', vim.lsp.buf.declaration, opts)
+    vim.keymap.set('n', 'gi', vim.lsp.buf.implementation, opts)
+    vim.keymap.set('n', 'go', vim.lsp.buf.type_definition, opts)
+    vim.keymap.set('n', 'gr', vim.lsp.buf.references, opts)
+    vim.keymap.set('n', 'gs', vim.lsp.buf.signature_help, opts)
+    vim.keymap.set('n', '<F2>', vim.lsp.buf.rename, opts)
+    vim.keymap.set({ 'n', 'x' }, '<F3>', function() vim.lsp.buf.format({ async = true }) end, opts)
+    vim.keymap.set('n', '<F4>', vim.lsp.buf.code_action, opts)
+  end,
 })
 
+-- Advertise nvim-cmp's extra capabilities to every LSP server
+vim.lsp.config('*', {
+  capabilities = require('cmp_nvim_lsp').default_capabilities(),
+})
 
-local default_setup = function(server)
-  require('lspconfig')[server].setup({
-    capabilities = lsp_capabilities,
-  })
-end
+-- pyright: auto-detect a project-local `.venv` (uv/standard layout) and point
+-- pyright at its interpreter so imports from venv packages resolve.
+vim.api.nvim_create_autocmd('LspAttach', {
+  desc = 'pyright: set pythonPath from <root>/.venv',
+  callback = function(args)
+    local client = vim.lsp.get_client_by_id(args.data.client_id)
+    if not client or client.name ~= 'pyright' then return end
+    local root = client.config.root_dir or vim.fn.getcwd()
+    local py = root .. '/.venv/bin/python'
+    if vim.fn.filereadable(py) ~= 1 then return end
+    client.config.settings = vim.tbl_deep_extend('force', client.config.settings or {}, {
+      python = { pythonPath = py },
+    })
+    -- nil signals pyright to re-pull config via workspace/configuration,
+    -- which is what actually makes it re-read pythonPath. Pushing settings
+    -- inline is silently ignored after init.
+    client:notify('workspace/didChangeConfiguration', { settings = nil })
+  end,
+})
 
+-- lua_ls: teach it about Neovim's runtime so editing this config is pleasant
+vim.lsp.config('lua_ls', {
+  settings = {
+    Lua = {
+      runtime = { version = 'LuaJIT' },
+      diagnostics = { globals = { 'vim' } },
+      workspace = {
+        library = vim.api.nvim_get_runtime_file('', true),
+        checkThirdParty = false,
+      },
+      telemetry = { enable = false },
+    },
+  },
+})
+
+-- mason: install & manage external tooling
+-- mason-lspconfig: bridges mason packages → vim.lsp.enable() for installed servers
 require('mason').setup({})
 require('mason-lspconfig').setup({
-  ensure_installed = {},
-  handlers = {
-    default_setup,
+  ensure_installed = { 'ts_ls', 'pyright', 'lua_ls' },
+  automatic_enable = true,
+})
+
+-- nvim-cmp: the completion popup ("IntelliSense")
+local cmp = require('cmp')
+local luasnip = require('luasnip')
+require('luasnip.loaders.from_vscode').lazy_load() -- friendly-snippets
+
+cmp.setup({
+  snippet = {
+    expand = function(args) luasnip.lsp_expand(args.body) end,
   },
+  mapping = cmp.mapping.preset.insert({
+    ['<C-Space>'] = cmp.mapping.complete(),
+    ['<C-e>']     = cmp.mapping.abort(),
+    ['<CR>']      = cmp.mapping.confirm({ select = false }),
+    ['<C-n>']     = cmp.mapping.select_next_item(),
+    ['<C-p>']     = cmp.mapping.select_prev_item(),
+    ['<C-d>']     = cmp.mapping.scroll_docs(4),
+    ['<C-u>']     = cmp.mapping.scroll_docs(-4),
+    ['<Tab>']     = cmp.mapping(function(fallback)
+      if cmp.visible() then cmp.select_next_item()
+      elseif luasnip.expand_or_jumpable() then luasnip.expand_or_jump()
+      else fallback() end
+    end, { 'i', 's' }),
+    ['<S-Tab>']   = cmp.mapping(function(fallback)
+      if cmp.visible() then cmp.select_prev_item()
+      elseif luasnip.jumpable(-1) then luasnip.jump(-1)
+      else fallback() end
+    end, { 'i', 's' }),
+  }),
+  sources = cmp.config.sources({
+    { name = 'nvim_lsp' },
+    { name = 'luasnip' },
+    { name = 'nvim_lua' },
+    { name = 'path' },
+  }, {
+    { name = 'buffer' },
+  }),
 })

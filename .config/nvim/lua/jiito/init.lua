@@ -1,4 +1,5 @@
 require("jiito.remap")
+require("jiito.lazy")
 require("jiito.lsp")
 
 -- Prettier on save 
