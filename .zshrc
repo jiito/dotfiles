@@ -127,3 +127,67 @@ if [ -f '/Users/bjar/google-cloud-sdk/path.zsh.inc' ]; then . '/Users/bjar/googl
 # The next line enables shell command completion for gcloud.
 if [ -f '/Users/bjar/google-cloud-sdk/completion.zsh.inc' ]; then . '/Users/bjar/google-cloud-sdk/completion.zsh.inc'; fi
 export PATH="$HOME/.local/bin:$PATH"
+
+# ── fzf shell integration (Ctrl-R history, Ctrl-T files, Alt-C dirs) ─────────
+command -v fzf >/dev/null && source <(fzf --zsh)
+
+# ── Claude Code multi-session helpers ────────────────────────────────────────
+# Pick a worktree with fzf and cd into it.
+wt() {
+  command -v fzf >/dev/null || { echo "wt: fzf not installed (brew install fzf)" >&2; return 1; }
+  git rev-parse --show-toplevel >/dev/null 2>&1 || { echo "wt: not in a git repo" >&2; return 1; }
+  local sel
+  sel=$(git worktree list | fzf --prompt='worktree> ' --height=40% --reverse \
+        --preview 'git -C $(echo {} | awk "{print \$1}") log --oneline -10' \
+        | awk '{print $1}')
+  [[ -z "$sel" ]] && return 130
+  cd "$sel"
+}
+
+# Same, but exec nvim in the chosen worktree (closing nvim closes the pane).
+nwt() {
+  command -v fzf >/dev/null || { echo "nwt: fzf not installed (brew install fzf)" >&2; return 1; }
+  git rev-parse --show-toplevel >/dev/null 2>&1 || { echo "nwt: not in a git repo" >&2; return 1; }
+  local sel
+  sel=$(git worktree list | fzf --prompt='worktree> ' --height=40% --reverse \
+        | awk '{print $1}')
+  [[ -z "$sel" ]] && return 130
+  cd "$sel" && exec nvim
+}
+
+# Create a new worktree branched from origin/main as a sibling dir, then cd in.
+wtnew() {
+  local branch="${1:?usage: wtnew <branch-name>}"
+  local root parent path base
+  root=$(git rev-parse --show-toplevel) || return 1
+  parent=$(dirname "$root")
+  path="$parent/$(basename "$root")-$branch"
+  base=$(git rev-parse --verify --quiet origin/main || git rev-parse --verify --quiet origin/master || echo HEAD)
+  git fetch origin --quiet
+  git worktree add -b "$branch" "$path" "$base" || return 1
+  cd "$path"
+}
+
+# Remove worktrees whose branch is fully merged into origin/main; prune the rest.
+wt-prune() {
+  git rev-parse --show-toplevel >/dev/null 2>&1 || { echo "wt-prune: not in a git repo" >&2; return 1; }
+  git fetch origin --quiet
+  git worktree list --porcelain | awk '/^worktree /{wt=$2} /^branch /{print wt, $2}' \
+    | while read -r dir ref; do
+        local branch=${ref#refs/heads/}
+        [[ "$branch" == "main" || "$branch" == "master" ]] && continue
+        if git merge-base --is-ancestor "$ref" origin/main 2>/dev/null \
+        || git merge-base --is-ancestor "$ref" origin/master 2>/dev/null; then
+          echo "removing $dir ($branch, merged)"
+          git worktree remove "$dir" && git branch -D "$branch"
+        fi
+      done
+  git worktree prune
+}
+
+# Claude Code short aliases.
+alias cc='claude'
+alias ccc='claude --continue'
+alias ccr='claude --resume'
+alias ccp='claude -p'
+alias ccw='claude --worktree'        # creates a worktree, runs claude in current pane

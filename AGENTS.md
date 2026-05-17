@@ -384,8 +384,42 @@ Expands to:
 - **2025-02**: Added Oh-My-Zsh plugin installation to setup script
 - **2024**: Initial dotfiles setup with bare repo approach
 
+## Neovim Configuration
+
+`~/.config/nvim/` is tracked by the dotfiles repo. Migrated from a hand-rolled `jiito/*` config to LazyVim (15.x) on 2026-05-16.
+
+### Layout
+
+```
+.config/nvim/
+├── init.lua                   # one-liner: require("config.lazy")
+├── lazy-lock.json             # plugin version lockfile (always commit)
+├── lua/
+│   ├── config/
+│   │   ├── lazy.lua           # LazyVim setup + enabled extras
+│   │   ├── keymaps.lua        # custom keymaps (incl. leap fork workaround)
+│   │   ├── options.lua, autocmds.lua  # LazyVim defaults
+│   │   └── worktree.lua       # snacks-picker worktree switcher logic
+│   └── plugins/
+│       ├── claudecode.lua     # coder/claudecode.nvim (Claude in nvim)
+│       ├── diffview.lua       # sindrets/diffview.nvim (PR-style diffs)
+│       ├── lualine.lua        # statusline override: worktree dir
+│       └── worktree.lua       # <leader>gw* keybindings
+```
+
+LazyVim extras enabled in `lua/config/lazy.lua`: `editor.leap`. Add more with `:LazyExtras`.
+
+### Leap workaround (codeberg fork bug)
+
+The `editor.leap` extra pulls from `codeberg.org/andyg/leap.nvim`. That fork has an internal inconsistency: `plugin/init.lua` defines `<Plug>(leap-forward)` but `add_default_mappings()` still binds `s`/`S` to the now-dead `<Plug>(leap-forward-to)` name. Compounded by lazy-load timing — the first `s` press resolves the mapping before leap has loaded, falling through to vim's default substitute.
+
+Fix in `lua/config/keymaps.lua`: eagerly `Lazy load leap.nvim` during VeryLazy, bind `s`/`S` to the correct `<Plug>` names with `remap = true`, and re-apply on `User LazyLoad` for safety. Worth reporting upstream.
+
+Detailed notes (workflow, keymaps, migration history): `~/notes/dev/tooling/nvim-setup.md` and `~/notes/dev/tooling/claude-multi-session.md` (in the Obsidian vault, not tracked by the dotfiles repo).
+
 ## See Also
 
 - [Oh-My-Zsh Documentation](https://github.com/ohmyzsh/ohmyzsh)
 - [Powerlevel10k Documentation](https://github.com/romkatv/powerlevel10k)
 - [Atlassian Bare Repo Tutorial](https://www.atlassian.com/git/tutorials/dotfiles)
+- [LazyVim](https://www.lazyvim.org/)
